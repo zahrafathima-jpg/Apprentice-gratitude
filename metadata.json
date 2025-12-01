@@ -1,0 +1,5 @@
+{
+  "name": "Google Apprentice Brand Studio",
+  "description": "A specialized design tool for generating Google Apprentice End-of-Year assets using Gemini 3 Pro.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google Apprentice Gratitude Generator</title>
+    
+    <!-- Styles & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- React & ReactDOM (UMD for browser) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX compilation in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      body {
+        font-family: 'Google Sans', sans-serif;
+      }
+      .google-logo-colors {
+        background: linear-gradient(90deg, #4285F4 25%, #DB4437 25%, #DB4437 50%, #F4B400 50%, #F4B400 75%, #0F9D58 75%);
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-quote-reveal {
+        animation: fadeIn 2s ease-out forwards;
+        opacity: 0;
+      }
+
+      /* Print Styles for A4 Display */
+      @media print {
+        header, footer, button, .no-print {
+          display: none !important;
+        }
+        body, #root, main {
+          background: white !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          height: 100vh !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .print-card {
+          box-shadow: none !important;
+          border: none !important;
+          width: 100% !important;
+          max-width: 800px !important;
+          transform: scale(1.3);
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-50 text-gray-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      // --- Constants ---
+      const INSPIRATIONAL_QUOTES = [
+        "Your curiosity is your superpower. Never stop asking questions that push boundaries.",
+        "You are not just learning the future; you are building it. Trust your vision.",
+        "Google hired you for your potential, not your perfection. You belong here.",
+        "Every expert was once a beginner who refused to give up. Keep pushing.",
+        "Your unique background is your competitive advantage. Lean into it.",
+        "Don't wait for permission to be great. Lead from where you are.",
+        "The only limit to your impact is your imagination. Dream big.",
+        "Mistakes are simply data points for improvement. Iterate and evolve.",
+        "You are writing the next chapter of technology. Make it a good one.",
+        "Believe in the power of 'yet'. You might not know it yet, but you will."
+      ];
+
+      const BrandColor = {
+        Blue: '#4285F4',
+        Red: '#DB4437',
+        Yellow: '#F4B400',
+        Green: '#0F9D58',
+      };
+
+      // --- Components ---
+      
+      const Header = () => {
+        return (
+          <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Blue }}></div>
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Red }}></div>
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Yellow }}></div>
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Green }}></div>
+                  </div>
+                  <h1 className="text-lg sm:text-xl font-medium text-gray-700 tracking-tight ml-2">
+                    Apprentice<span className="font-bold text-gray-900">Gratitude</span>
+                  </h1>
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500">
+                  End-of-Year 2025
+                </div>
+              </div>
+            </div>
+          </header>
+        );
+      };
+
+      const App = () => {
+        const [step, setStep] = React.useState('qr');
+        const [name, setName] = React.useState('');
+        const [currentQuote, setCurrentQuote] = React.useState('');
+        const [qrImageUrl, setQrImageUrl] = React.useState('');
+
+        React.useEffect(() => {
+          // 1. Pick a random quote
+          const randomQuote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)];
+          setCurrentQuote(randomQuote);
+
+          // 2. Generate QR Code URL
+          // We assume this file is deployed. We strip params and add ?s=1
+          const baseUrl = window.location.href.split('?')[0];
+          const studentUrl = `${baseUrl}?s=1`;
+          const encodedUrl = encodeURIComponent(studentUrl);
+          
+          // Generate QR Code via QuickChart
+          setQrImageUrl(`https://quickchart.io/qr?text=${encodedUrl}&size=500&ecLevel=L&dark=000000&light=ffffff&margin=4`);
+
+          // 3. Check for student mode
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('s') === '1') {
+            setStep('input');
+          }
+        }, []);
+
+        const handleUnlock = (e) => {
+          e.preventDefault();
+          if (!name.trim()) return;
+
+          triggerConfetti();
+          setStep('result');
+        };
+
+        const triggerConfetti = () => {
+          if (window.confetti) {
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+            const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+            const interval = setInterval(function() {
+              const timeLeft = animationEnd - Date.now();
+              if (timeLeft <= 0) return clearInterval(interval);
+              const particleCount = 50 * (timeLeft / duration);
+              window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+              window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+          }
+        };
+
+        return (
+          <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
+            <Header />
+
+            <main className="flex-grow flex flex-col items-center justify-center p-4">
+              
+              {/* STEP 1: QR CODE */}
+              {step === 'qr' && (
+                <div className="print-card bg-white p-8 rounded-3xl shadow-xl max-w-lg w-full text-center border border-gray-100">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Apprentices!</h2>
+                  <p className="text-gray-600 mb-8">Scan to unlock your personalized message.</p>
+                  
+                  <div className="bg-white p-2 rounded-xl border-2 border-gray-100 inline-block mb-8 shadow-sm">
+                    <img 
+                      src={qrImageUrl} 
+                      alt="Scan this QR Code" 
+                      className="w-64 h-64 sm:w-80 sm:h-80 object-contain mx-auto"
+                    />
+                  </div>
+
+                  <div className="no-print space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <button 
+                        onClick={() => setStep('input')}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full transition-colors"
+                      >
+                        Start Manual
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: NAME INPUT */}
+              {step === 'input' && (
+                <div className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-md w-full text-center border border-gray-100">
+                   <div className="mb-6 flex justify-center">
+                     <span className="text-4xl">👋</span>
+                   </div>
+                   <h2 className="text-2xl font-bold text-gray-800 mb-2">Who is this awesome apprentice?</h2>
+                   <p className="text-gray-500 mb-8 text-sm">Enter your name to receive your message.</p>
+                   
+                   <form onSubmit={handleUnlock} className="space-y-6">
+                     <input 
+                       type="text" 
+                       value={name}
+                       onChange={(e) => setName(e.target.value)}
+                       placeholder="Your Name"
+                       className="w-full text-center text-xl p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 focus:outline-none transition-all duration-300 focus:scale-[1.02] focus:shadow-lg placeholder-gray-300"
+                       autoFocus
+                     />
+                     <button 
+                       type="submit"
+                       disabled={!name.trim()}
+                       className={`
+                         w-full py-4 rounded-xl text-lg font-bold text-white transition-all duration-300 transform
+                         ${name.trim() 
+                           ? 'bg-blue-600 hover:bg-blue-700 shadow-lg scale-100' 
+                           : 'bg-gray-300 cursor-not-allowed scale-[0.98]'
+                         }
+                       `}
+                     >
+                       Start My Message
+                     </button>
+                   </form>
+                </div>
+              )}
+
+              {/* STEP 3: RESULT */}
+              {step === 'result' && (
+                <div className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-lg w-full text-center border-t-8 border-blue-500 relative overflow-hidden animate-quote-reveal">
+                  
+                  {/* Background decorations */}
+                  <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-yellow-50 opacity-50 blur-xl"></div>
+                  <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-blue-50 opacity-50 blur-xl"></div>
+
+                  <div className="relative z-10">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-6">
+                      Hello, <span className="text-blue-600">{name}</span>!
+                    </h2>
+                    
+                    <div className="my-8">
+                       <div className="inline-block p-4 rounded-full bg-gray-50 mb-6">
+                          <span className="text-4xl">✨</span>
+                       </div>
+                       <blockquote className="text-xl sm:text-2xl font-medium text-gray-700 leading-relaxed font-google-sans italic">
+                         "{currentQuote}"
+                       </blockquote>
+                    </div>
+
+                    <div className="mt-8 pt-8 border-t border-gray-100">
+                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+                        Google Apprentice 2025
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </main>
+            
+            <footer className="p-6 text-center text-gray-400 text-xs no-print">
+              <p>© 2025 Google Apprentice Brand Studio</p>
+            </footer>
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
