@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { INSPIRATIONAL_QUOTES } from './constants';
@@ -17,6 +18,10 @@ const App: React.FC = () => {
   const [name, setName] = useState('');
   const [currentQuote, setCurrentQuote] = useState('');
   const [qrImageUrl, setQrImageUrl] = useState('');
+  
+  // State for manual URL editing (fixes Vercel Preview auth issues)
+  const [targetUrl, setTargetUrl] = useState('');
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
 
   // --- Audio Logic ---
   const playAudio = (type: 'click' | 'success') => {
@@ -28,38 +33,30 @@ const App: React.FC = () => {
       const now = ctx.currentTime;
 
       if (type === 'click') {
-        // Subtle pop for UI interactions
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
-        
         osc.type = 'sine';
         osc.frequency.setValueAtTime(800, now);
         osc.frequency.exponentialRampToValueAtTime(400, now + 0.08);
-        
-        gain.gain.setValueAtTime(0.05, now); // Low volume
+        gain.gain.setValueAtTime(0.05, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-        
         osc.start(now);
         osc.stop(now + 0.08);
       } else if (type === 'success') {
-        // Magical chord (C Major 7) for reveal
-        const notes = [523.25, 659.25, 783.99, 987.77]; // C5, E5, G5, B5
+        const notes = [523.25, 659.25, 783.99, 987.77]; 
         notes.forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.connect(gain);
           gain.connect(ctx.destination);
-          
-          osc.type = 'triangle'; // Softer than square, richer than sine
+          osc.type = 'triangle';
           osc.frequency.value = freq;
-          
-          const startTime = now + (i * 0.05); // Staggered entry
+          const startTime = now + (i * 0.05);
           gain.gain.setValueAtTime(0, startTime);
           gain.gain.linearRampToValueAtTime(0.05, startTime + 0.05);
           gain.gain.exponentialRampToValueAtTime(0.001, startTime + 2.0);
-          
           osc.start(startTime);
           osc.stop(startTime + 2.0);
         });
@@ -70,55 +67,53 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // 1. Pre-select a quote so it's ready
+    // 1. Pre-select a quote
     const randomQuote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)];
     setCurrentQuote(randomQuote);
 
-    // 2. Determine URL for QR Code
-    // We add ?s=1 to indicate "Start" mode so users skip the QR page
+    // 2. Initial URL detection
+    // Strip query params to get the base "app" URL
     const baseUrl = window.location.href.split('?')[0];
-    const studentUrl = `${baseUrl}?s=1`;
-    const encodedUrl = encodeURIComponent(studentUrl);
-    
-    // 3. Generate High-Contrast QR Code via QuickChart
-    setQrImageUrl(`https://quickchart.io/qr?text=${encodedUrl}&size=500&ecLevel=L&dark=000000&light=ffffff&margin=4`);
+    setTargetUrl(baseUrl);
 
-    // 4. Check if the user arrived via the QR code
+    // 3. Check if the user arrived via the QR code (has ?s=1)
     const params = new URLSearchParams(window.location.search);
     if (params.get('s') === '1') {
       setStep('input');
     }
   }, []);
 
+  // Effect to regenerate QR whenever the targetUrl changes
+  useEffect(() => {
+    if (!targetUrl) return;
+    
+    // Ensure we append the start parameter so scanners go straight to input
+    const cleanBase = targetUrl.split('?')[0];
+    const studentUrl = `${cleanBase}?s=1`;
+    const encodedUrl = encodeURIComponent(studentUrl);
+    
+    setQrImageUrl(`https://quickchart.io/qr?text=${encodedUrl}&size=500&ecLevel=L&dark=000000&light=ffffff&margin=4`);
+  }, [targetUrl]);
+
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-
-    // Trigger Sound & Confetti
     playAudio('success');
     triggerConfetti();
     setStep('result');
   };
 
   const triggerConfetti = () => {
-    // Safety check for the confetti library
     if (typeof window.confetti === 'function') {
       const duration = 3000;
       const animationEnd = Date.now() + duration;
       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
       const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
       const interval: any = setInterval(function() {
         const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
-
+        if (timeLeft <= 0) return clearInterval(interval);
         const particleCount = 50 * (timeLeft / duration);
-        // Since particles fall down, start a bit higher than random
-        // Using cool colors for confetti: Indigo, Cyan, Purple
         const coolColors = ['#6366f1', '#06b6d4', '#a855f7'];
         
         window.confetti(Object.assign({}, defaults, { 
@@ -147,12 +142,46 @@ const App: React.FC = () => {
             <h2 className="text-3xl font-bold text-gray-800 mb-2">Ready for some inspiration?</h2>
             <p className="text-gray-600 mb-8">Scan to unlock your daily insight.</p>
             
-            <div className="bg-white p-2 rounded-xl border-2 border-gray-100 inline-block mb-8 shadow-sm">
+            <div className="bg-white p-2 rounded-xl border-2 border-gray-100 inline-block mb-6 shadow-sm">
               <img 
                 src={qrImageUrl} 
                 alt="QR Code to scan and open this app on mobile" 
                 className="w-64 h-64 sm:w-80 sm:h-80 object-contain mx-auto"
               />
+            </div>
+
+            {/* URL Editor for Vercel Preview Fix */}
+            <div className="no-print mb-8">
+              {isEditingUrl ? (
+                <div className="flex flex-col gap-2 animate-fadeIn">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Set Public URL (e.g., your-app.vercel.app)</label>
+                  <div className="flex gap-2 justify-center">
+                    <input 
+                      type="text" 
+                      value={targetUrl}
+                      onChange={(e) => setTargetUrl(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-1 text-sm w-full max-w-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <button 
+                      onClick={() => setIsEditingUrl(false)}
+                      className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-indigo-700"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1 group">
+                   <p className="text-xs text-gray-400">QR points to: <span className="font-mono">{targetUrl}</span></p>
+                   <button 
+                    onClick={() => setIsEditingUrl(true)}
+                    className="text-xs text-indigo-500 font-medium hover:underline hover:text-indigo-600 flex items-center gap-1"
+                   >
+                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                     Edit Link (Fix for Private Previews)
+                   </button>
+                </div>
+              )}
             </div>
 
             <div className="no-print space-y-4">
@@ -220,8 +249,7 @@ const App: React.FC = () => {
             className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-lg w-full text-center border-t-8 border-indigo-500 relative overflow-hidden animate-quote-reveal"
             aria-live="polite"
           >
-            
-            {/* Background decorations - Hidden from screen readers */}
+            {/* Background decorations */}
             <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-purple-100 opacity-50 blur-xl" aria-hidden="true"></div>
             <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-teal-100 opacity-50 blur-xl" aria-hidden="true"></div>
 
