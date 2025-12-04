@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -135,8 +134,25 @@
           const randomQuote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)];
           setCurrentQuote(randomQuote);
 
-          // 2. Initial URL detection
-          const baseUrl = window.location.href.split('?')[0];
+          // 2. Initial URL detection with Smart Correction
+          let baseUrl = window.location.href.split('?')[0];
+
+          // HEURISTIC: Fix Vercel Preview URLs to avoid "Login to Vercel" on scan
+          // Pattern: project-git-branch-user.vercel.app -> project.vercel.app
+          if (baseUrl.includes('-git-') && baseUrl.includes('.vercel.app')) {
+            try {
+              const urlObj = new URL(baseUrl);
+              const parts = urlObj.hostname.split('-git-');
+              if (parts.length > 0) {
+                // Reconstruct as https://projectname.vercel.app
+                urlObj.hostname = `${parts[0]}.vercel.app`;
+                baseUrl = urlObj.toString();
+              }
+            } catch (e) {
+               console.warn("Could not parse URL", e);
+            }
+          }
+
           setTargetUrl(baseUrl);
           
           // 3. Check for student mode
@@ -149,7 +165,7 @@
         // Regenerate QR when targetUrl changes
         React.useEffect(() => {
           if (!targetUrl) return;
-          const cleanBase = targetUrl.split('?')[0];
+          const cleanBase = targetUrl.endsWith('/') ? targetUrl.slice(0, -1) : targetUrl;
           const studentUrl = `${cleanBase}?s=1`;
           const encodedUrl = encodeURIComponent(studentUrl);
           setQrImageUrl(`https://quickchart.io/qr?text=${encodedUrl}&size=500&ecLevel=L&dark=000000&light=ffffff&margin=4`);

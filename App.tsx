@@ -68,9 +68,26 @@ const App: React.FC = () => {
     const randomQuote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)];
     setCurrentQuote(randomQuote);
 
-    // 2. Initial URL detection
-    // Strip query params to get the base "app" URL
-    const baseUrl = window.location.href.split('?')[0];
+    // 2. Initial URL detection with Vercel Preview Correction
+    let baseUrl = window.location.href.split('?')[0];
+
+    // HEURISTIC: If we are on a Vercel git preview link (contains -git-), 
+    // try to guess the production URL to avoid "Login to Vercel" errors on mobile.
+    // Example: food-for-thought-git-main-user.vercel.app -> food-for-thought.vercel.app
+    if (baseUrl.includes('-git-') && baseUrl.includes('.vercel.app')) {
+      try {
+        const urlObj = new URL(baseUrl);
+        const parts = urlObj.hostname.split('-git-');
+        if (parts.length > 0) {
+          // Reconstruct as https://projectname.vercel.app
+          urlObj.hostname = `${parts[0]}.vercel.app`;
+          baseUrl = urlObj.toString();
+        }
+      } catch (e) {
+        console.warn("Could not auto-correct Vercel URL", e);
+      }
+    }
+
     setTargetUrl(baseUrl);
 
     // 3. Check if the user arrived via the QR code (has ?s=1)
@@ -85,7 +102,8 @@ const App: React.FC = () => {
     if (!targetUrl) return;
     
     // Ensure we append the start parameter so scanners go straight to input
-    const cleanBase = targetUrl.split('?')[0];
+    // Remove trailing slash if present for cleaner URL
+    const cleanBase = targetUrl.endsWith('/') ? targetUrl.slice(0, -1) : targetUrl;
     const studentUrl = `${cleanBase}?s=1`;
     const encodedUrl = encodeURIComponent(studentUrl);
     
