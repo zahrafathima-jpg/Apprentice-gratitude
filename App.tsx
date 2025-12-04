@@ -6,6 +6,7 @@ import { INSPIRATIONAL_QUOTES } from './constants';
 declare global {
   interface Window {
     confetti: any;
+    webkitAudioContext: typeof AudioContext;
   }
 }
 
@@ -17,21 +18,69 @@ const App: React.FC = () => {
   const [currentQuote, setCurrentQuote] = useState('');
   const [qrImageUrl, setQrImageUrl] = useState('');
 
+  // --- Audio Logic ---
+  const playAudio = (type: 'click' | 'success') => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      
+      const ctx = new AudioContext();
+      const now = ctx.currentTime;
+
+      if (type === 'click') {
+        // Subtle pop for UI interactions
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+        
+        gain.gain.setValueAtTime(0.05, now); // Low volume
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'success') {
+        // Magical chord (C Major 7) for reveal
+        const notes = [523.25, 659.25, 783.99, 987.77]; // C5, E5, G5, B5
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.type = 'triangle'; // Softer than square, richer than sine
+          osc.frequency.value = freq;
+          
+          const startTime = now + (i * 0.05); // Staggered entry
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.05, startTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 2.0);
+          
+          osc.start(startTime);
+          osc.stop(startTime + 2.0);
+        });
+      }
+    } catch (e) {
+      console.error("Audio play failed", e);
+    }
+  };
+
   useEffect(() => {
     // 1. Pre-select a quote so it's ready
     const randomQuote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)];
     setCurrentQuote(randomQuote);
 
     // 2. Determine URL for QR Code
-    // We add ?s=1 to indicate "Start" mode for the student so they skip the QR page
+    // We add ?s=1 to indicate "Start" mode so users skip the QR page
     const baseUrl = window.location.href.split('?')[0];
     const studentUrl = `${baseUrl}?s=1`;
     const encodedUrl = encodeURIComponent(studentUrl);
     
-    // 3. Generate High-Contrast, Low-Density QR Code via QuickChart
-    // ecLevel=L (Low) makes the pattern less dense = easier to scan
-    // margin=4 adds a white border (quiet zone)
-    // dark=000000 ensures pure black for contrast
+    // 3. Generate High-Contrast QR Code via QuickChart
     setQrImageUrl(`https://quickchart.io/qr?text=${encodedUrl}&size=500&ecLevel=L&dark=000000&light=ffffff&margin=4`);
 
     // 4. Check if the user arrived via the QR code
@@ -45,7 +94,8 @@ const App: React.FC = () => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    // Trigger Confetti
+    // Trigger Sound & Confetti
+    playAudio('success');
     triggerConfetti();
     setStep('result');
   };
@@ -68,8 +118,19 @@ const App: React.FC = () => {
 
         const particleCount = 50 * (timeLeft / duration);
         // Since particles fall down, start a bit higher than random
-        window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+        // Using cool colors for confetti: Indigo, Cyan, Purple
+        const coolColors = ['#6366f1', '#06b6d4', '#a855f7'];
+        
+        window.confetti(Object.assign({}, defaults, { 
+          particleCount, 
+          colors: coolColors,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } 
+        }));
+        window.confetti(Object.assign({}, defaults, { 
+          particleCount, 
+          colors: coolColors,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } 
+        }));
       }, 250);
     }
   };
@@ -80,28 +141,28 @@ const App: React.FC = () => {
 
       <main className="flex-grow flex flex-col items-center justify-center p-4">
         
-        {/* STEP 1: QR CODE DISPLAY (For the Organizer/Screen) */}
+        {/* STEP 1: QR CODE DISPLAY */}
         {step === 'qr' && (
           <div className="print-card bg-white p-8 rounded-3xl shadow-xl max-w-lg w-full text-center border border-gray-100">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Apprentices!</h2>
-            <p className="text-gray-600 mb-8">Scan to unlock your personalized message.</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Ready for some inspiration?</h2>
+            <p className="text-gray-600 mb-8">Scan to unlock your daily insight.</p>
             
             <div className="bg-white p-2 rounded-xl border-2 border-gray-100 inline-block mb-8 shadow-sm">
               <img 
                 src={qrImageUrl} 
-                alt="Scan this QR Code" 
+                alt="QR Code to scan and open this app on mobile" 
                 className="w-64 h-64 sm:w-80 sm:h-80 object-contain mx-auto"
               />
             </div>
 
             <div className="no-print space-y-4">
-              <p className="text-xs text-gray-400 max-w-xs mx-auto mb-4">
-                Note: If scanning leads to "localhost" and fails, you must deploy this app to the web first.
-              </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button 
-                  onClick={() => setStep('input')}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full transition-colors"
+                  onClick={() => {
+                    playAudio('click');
+                    setStep('input');
+                  }}
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-full transition-colors focus:ring-4 focus:ring-indigo-200 focus:outline-none shadow-md hover:shadow-lg"
                 >
                   Start Manual
                 </button>
@@ -110,36 +171,44 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* STEP 2: NAME INPUT (For the Student) */}
+        {/* STEP 2: NAME INPUT */}
         {step === 'input' && (
           <div className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-md w-full text-center border border-gray-100">
-             <div className="mb-6 flex justify-center">
+             <div className="mb-6 flex justify-center" aria-hidden="true">
                <span className="text-4xl">👋</span>
              </div>
-             <h2 className="text-2xl font-bold text-gray-800 mb-2">Who is this awesome apprentice?</h2>
-             <p className="text-gray-500 mb-8 text-sm">Enter your name to receive your message.</p>
+             <h2 className="text-2xl font-bold text-gray-800 mb-2">Let's get started.</h2>
              
              <form onSubmit={handleUnlock} className="space-y-6">
+               <label htmlFor="name-input" className="block text-gray-500 mb-8 text-sm">
+                 Enter your name to unlock your quote.
+               </label>
+               
                <input 
+                 id="name-input"
+                 name="name"
                  type="text" 
                  value={name}
                  onChange={(e) => setName(e.target.value)}
+                 onFocus={() => playAudio('click')}
                  placeholder="Your Name"
-                 className="w-full text-center text-xl p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 focus:outline-none transition-all duration-300 focus:scale-[1.02] focus:shadow-lg placeholder-gray-300"
+                 autoComplete="given-name"
+                 className="w-full text-center text-xl p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 focus:ring-offset-2 focus:outline-none transition-all duration-300 focus:scale-[1.02] focus:shadow-lg placeholder-gray-400 text-gray-900"
                  autoFocus
                />
                <button 
                  type="submit"
                  disabled={!name.trim()}
+                 aria-label="Unlock my personalized message"
                  className={`
-                   w-full py-4 rounded-xl text-lg font-bold text-white transition-all duration-300 transform
+                   w-full py-4 rounded-xl text-lg font-bold text-white transition-all duration-300 transform focus:outline-none focus:ring-4 focus:ring-offset-2
                    ${name.trim() 
-                     ? 'bg-blue-600 hover:bg-blue-700 shadow-lg scale-100' 
+                     ? 'bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl hover:-translate-y-1 scale-100 focus:ring-indigo-500' 
                      : 'bg-gray-300 cursor-not-allowed scale-[0.98]'
                    }
                  `}
                >
-                 Start My Message
+                 Unlock Message
                </button>
              </form>
           </div>
@@ -147,19 +216,22 @@ const App: React.FC = () => {
 
         {/* STEP 3: THE REVEAL */}
         {step === 'result' && (
-          <div className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-lg w-full text-center border-t-8 border-blue-500 relative overflow-hidden animate-quote-reveal">
+          <div 
+            className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-lg w-full text-center border-t-8 border-indigo-500 relative overflow-hidden animate-quote-reveal"
+            aria-live="polite"
+          >
             
-            {/* Background decorations */}
-            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-yellow-50 opacity-50 blur-xl"></div>
-            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-blue-50 opacity-50 blur-xl"></div>
+            {/* Background decorations - Hidden from screen readers */}
+            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-purple-100 opacity-50 blur-xl" aria-hidden="true"></div>
+            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-teal-100 opacity-50 blur-xl" aria-hidden="true"></div>
 
             <div className="relative z-10">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-6">
-                Hello, <span className="text-blue-600">{name}</span>!
+                Hello, <span className="text-indigo-600">{name}</span>!
               </h2>
               
               <div className="my-8">
-                 <div className="inline-block p-4 rounded-full bg-gray-50 mb-6">
+                 <div className="inline-block p-4 rounded-full bg-gray-50 mb-6" aria-hidden="true">
                     <span className="text-4xl">✨</span>
                  </div>
                  <blockquote className="text-xl sm:text-2xl font-medium text-gray-700 leading-relaxed font-google-sans italic">
@@ -169,7 +241,7 @@ const App: React.FC = () => {
 
               <div className="mt-8 pt-8 border-t border-gray-100">
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
-                  Google Apprentice 2025
+                  Food for Thought 2025
                 </p>
               </div>
             </div>
@@ -179,8 +251,8 @@ const App: React.FC = () => {
       </main>
       
       {/* Footer / Copyright */}
-      <footer className="p-6 text-center text-gray-400 text-xs no-print">
-        <p>© 2025 Google Apprentice Brand Studio</p>
+      <footer className="p-6 text-center text-gray-500 text-xs no-print">
+        <p>© 2025 Food for Thought Studio</p>
       </footer>
     </div>
   );

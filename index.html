@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Google Apprentice Gratitude Generator</title>
+    <meta name="description" content="A personalized daily inspiration generator for Food for Thought 2025." />
+    <title>Food for Thought</title>
     
     <!-- Styles & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,9 +23,6 @@
     <style>
       body {
         font-family: 'Google Sans', sans-serif;
-      }
-      .google-logo-colors {
-        background: linear-gradient(90deg, #4285F4 25%, #DB4437 25%, #DB4437 50%, #F4B400 50%, #F4B400 75%, #0F9D58 75%);
       }
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
@@ -75,23 +73,22 @@
     <script type="text/babel">
       // --- Constants ---
       const INSPIRATIONAL_QUOTES = [
-        "Your curiosity is your superpower. Never stop asking questions that push boundaries.",
-        "You are not just learning the future; you are building it. Trust your vision.",
-        "Google hired you for your potential, not your perfection. You belong here.",
-        "Every expert was once a beginner who refused to give up. Keep pushing.",
-        "Your unique background is your competitive advantage. Lean into it.",
-        "Don't wait for permission to be great. Lead from where you are.",
-        "The only limit to your impact is your imagination. Dream big.",
-        "Mistakes are simply data points for improvement. Iterate and evolve.",
-        "You are writing the next chapter of technology. Make it a good one.",
-        "Believe in the power of 'yet'. You might not know it yet, but you will."
+        "The future isn't just something you enter, it's something you create.",
+        "Your perspective is the missing piece of the puzzle. Bring it.",
+        "Don't just learn the rules. Learn them so you can break them better.",
+        "Innovation starts with a question. Never stop asking 'What if?'",
+        "You have the capability to change the game. Start playing.",
+        "Small ripples create big waves. Your impact starts now.",
+        "Be bold enough to use your voice, brave enough to listen to your heart.",
+        "The expert in anything was once a beginner. Keep climbing.",
+        "Your potential is a fire waiting for a spark. Be that spark.",
+        "Make today so awesome that yesterday gets jealous."
       ];
 
-      const BrandColor = {
-        Blue: '#4285F4',
-        Red: '#DB4437',
-        Yellow: '#F4B400',
-        Green: '#0F9D58',
+      const CoolColors = {
+        Teal: '#2dd4bf',   // teal-400
+        Indigo: '#6366f1', // indigo-500
+        Purple: '#a855f7', // purple-500
       };
 
       // --- Components ---
@@ -102,18 +99,17 @@
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between items-center h-16">
                 <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Blue }}></div>
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Red }}></div>
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Yellow }}></div>
-                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: BrandColor.Green }}></div>
+                  <div className="flex gap-1.5" aria-hidden="true">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: CoolColors.Teal }}></div>
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: CoolColors.Indigo }}></div>
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: CoolColors.Purple }}></div>
                   </div>
                   <h1 className="text-lg sm:text-xl font-medium text-gray-700 tracking-tight ml-2">
-                    Apprentice<span className="font-bold text-gray-900">Gratitude</span>
+                    Food for <span className="font-bold text-indigo-600">Thought</span>
                   </h1>
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500">
-                  End-of-Year 2025
+                  2025 Edition
                 </div>
               </div>
             </div>
@@ -148,10 +144,59 @@
           }
         }, []);
 
+        // --- Audio Logic ---
+        const playAudio = (type) => {
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            
+            const ctx = new AudioContext();
+            const now = ctx.currentTime;
+
+            if (type === 'click') {
+              // Subtle pop
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(800, now);
+              osc.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+              gain.gain.setValueAtTime(0.05, now);
+              gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+              osc.start(now);
+              osc.stop(now + 0.08);
+            } else if (type === 'success') {
+              // Magical chord (C Major 7: C, E, G, B)
+              const notes = [523.25, 659.25, 783.99, 987.77]; 
+              notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'triangle'; // softer than square, richer than sine
+                osc.frequency.value = freq;
+                
+                // Envelope
+                const startTime = now + (i * 0.05);
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.05, startTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 2.0);
+                
+                osc.start(startTime);
+                osc.stop(startTime + 2.0);
+              });
+            }
+          } catch (e) {
+            console.error("Audio play failed", e);
+          }
+        };
+
         const handleUnlock = (e) => {
           e.preventDefault();
           if (!name.trim()) return;
 
+          playAudio('success');
           triggerConfetti();
           setStep('result');
         };
@@ -167,8 +212,20 @@
               const timeLeft = animationEnd - Date.now();
               if (timeLeft <= 0) return clearInterval(interval);
               const particleCount = 50 * (timeLeft / duration);
-              window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-              window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+              
+              // Cool colors for confetti
+              const confettiColors = ['#6366f1', '#06b6d4', '#a855f7'];
+
+              window.confetti(Object.assign({}, defaults, { 
+                particleCount, 
+                colors: confettiColors,
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } 
+              }));
+              window.confetti(Object.assign({}, defaults, { 
+                particleCount, 
+                colors: confettiColors,
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } 
+              }));
             }, 250);
           }
         };
@@ -182,13 +239,13 @@
               {/* STEP 1: QR CODE */}
               {step === 'qr' && (
                 <div className="print-card bg-white p-8 rounded-3xl shadow-xl max-w-lg w-full text-center border border-gray-100">
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Apprentices!</h2>
-                  <p className="text-gray-600 mb-8">Scan to unlock your personalized message.</p>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2">Ready for some inspiration?</h2>
+                  <p className="text-gray-600 mb-8">Scan to unlock your daily insight.</p>
                   
                   <div className="bg-white p-2 rounded-xl border-2 border-gray-100 inline-block mb-8 shadow-sm">
                     <img 
                       src={qrImageUrl} 
-                      alt="Scan this QR Code" 
+                      alt="QR Code to scan and open this app on mobile" 
                       className="w-64 h-64 sm:w-80 sm:h-80 object-contain mx-auto"
                     />
                   </div>
@@ -196,8 +253,11 @@
                   <div className="no-print space-y-4">
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <button 
-                        onClick={() => setStep('input')}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full transition-colors"
+                        onClick={() => {
+                          playAudio('click');
+                          setStep('input');
+                        }}
+                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-full transition-colors focus:ring-4 focus:ring-indigo-200 focus:outline-none shadow-md hover:shadow-lg"
                       >
                         Start Manual
                       </button>
@@ -209,33 +269,41 @@
               {/* STEP 2: NAME INPUT */}
               {step === 'input' && (
                 <div className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-md w-full text-center border border-gray-100">
-                   <div className="mb-6 flex justify-center">
+                   <div className="mb-6 flex justify-center" aria-hidden="true">
                      <span className="text-4xl">👋</span>
                    </div>
-                   <h2 className="text-2xl font-bold text-gray-800 mb-2">Who is this awesome apprentice?</h2>
-                   <p className="text-gray-500 mb-8 text-sm">Enter your name to receive your message.</p>
+                   <h2 className="text-2xl font-bold text-gray-800 mb-2">Let's get started.</h2>
                    
                    <form onSubmit={handleUnlock} className="space-y-6">
+                     <label htmlFor="name-input" className="block text-gray-500 mb-8 text-sm">
+                        Enter your name to unlock your quote.
+                     </label>
+
                      <input 
+                       id="name-input"
+                       name="name"
+                       autoComplete="given-name"
                        type="text" 
                        value={name}
                        onChange={(e) => setName(e.target.value)}
+                       onFocus={() => playAudio('click')}
                        placeholder="Your Name"
-                       className="w-full text-center text-xl p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-50 focus:outline-none transition-all duration-300 focus:scale-[1.02] focus:shadow-lg placeholder-gray-300"
+                       className="w-full text-center text-xl p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 focus:ring-offset-2 focus:outline-none transition-all duration-300 focus:scale-[1.02] focus:shadow-lg placeholder-gray-400 text-gray-900"
                        autoFocus
                      />
                      <button 
                        type="submit"
                        disabled={!name.trim()}
+                       aria-label="Unlock my personalized message"
                        className={`
-                         w-full py-4 rounded-xl text-lg font-bold text-white transition-all duration-300 transform
+                         w-full py-4 rounded-xl text-lg font-bold text-white transition-all duration-300 transform focus:outline-none focus:ring-4 focus:ring-offset-2
                          ${name.trim() 
-                           ? 'bg-blue-600 hover:bg-blue-700 shadow-lg scale-100' 
+                           ? 'bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl hover:-translate-y-1 scale-100 focus:ring-indigo-500' 
                            : 'bg-gray-300 cursor-not-allowed scale-[0.98]'
                          }
                        `}
                      >
-                       Start My Message
+                       Unlock Message
                      </button>
                    </form>
                 </div>
@@ -243,19 +311,22 @@
 
               {/* STEP 3: RESULT */}
               {step === 'result' && (
-                <div className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-lg w-full text-center border-t-8 border-blue-500 relative overflow-hidden animate-quote-reveal">
+                <div 
+                  className="bg-white p-8 sm:p-12 rounded-3xl shadow-xl max-w-lg w-full text-center border-t-8 border-indigo-500 relative overflow-hidden animate-quote-reveal"
+                  aria-live="polite"
+                >
                   
                   {/* Background decorations */}
-                  <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-yellow-50 opacity-50 blur-xl"></div>
-                  <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-blue-50 opacity-50 blur-xl"></div>
+                  <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-purple-100 opacity-50 blur-xl" aria-hidden="true"></div>
+                  <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-teal-100 opacity-50 blur-xl" aria-hidden="true"></div>
 
                   <div className="relative z-10">
                     <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-6">
-                      Hello, <span className="text-blue-600">{name}</span>!
+                      Hello, <span className="text-indigo-600">{name}</span>!
                     </h2>
                     
                     <div className="my-8">
-                       <div className="inline-block p-4 rounded-full bg-gray-50 mb-6">
+                       <div className="inline-block p-4 rounded-full bg-gray-50 mb-6" aria-hidden="true">
                           <span className="text-4xl">✨</span>
                        </div>
                        <blockquote className="text-xl sm:text-2xl font-medium text-gray-700 leading-relaxed font-google-sans italic">
@@ -265,7 +336,7 @@
 
                     <div className="mt-8 pt-8 border-t border-gray-100">
                       <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
-                        Google Apprentice 2025
+                        Food for Thought 2025
                       </p>
                     </div>
                   </div>
@@ -274,8 +345,8 @@
 
             </main>
             
-            <footer className="p-6 text-center text-gray-400 text-xs no-print">
-              <p>© 2025 Google Apprentice Brand Studio</p>
+            <footer className="p-6 text-center text-gray-500 text-xs no-print">
+              <p>© 2025 Food for Thought Studio</p>
             </footer>
           </div>
         );
