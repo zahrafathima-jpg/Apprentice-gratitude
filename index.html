@@ -64,10 +64,10 @@
   <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
   }
 }
 </script>
@@ -165,7 +165,7 @@
         // Regenerate QR when targetUrl changes
         React.useEffect(() => {
           if (!targetUrl) return;
-          const cleanBase = targetUrl.endsWith('/') ? targetUrl.slice(0, -1) : targetUrl;
+          const cleanBase = targetUrl.split('?')[0];
           const studentUrl = `${cleanBase}?s=1`;
           const encodedUrl = encodeURIComponent(studentUrl);
           setQrImageUrl(`https://quickchart.io/qr?text=${encodedUrl}&size=500&ecLevel=L&dark=000000&light=ffffff&margin=4`);

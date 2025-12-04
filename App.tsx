@@ -68,12 +68,11 @@ const App: React.FC = () => {
     const randomQuote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)];
     setCurrentQuote(randomQuote);
 
-    // 2. Initial URL detection with Vercel Preview Correction
+    // 2. Initial URL detection with Smart Correction
     let baseUrl = window.location.href.split('?')[0];
 
-    // HEURISTIC: If we are on a Vercel git preview link (contains -git-), 
-    // try to guess the production URL to avoid "Login to Vercel" errors on mobile.
-    // Example: food-for-thought-git-main-user.vercel.app -> food-for-thought.vercel.app
+    // HEURISTIC: Fix Vercel Preview URLs to avoid "Login to Vercel" on scan
+    // Pattern: project-git-branch-user.vercel.app -> project.vercel.app
     if (baseUrl.includes('-git-') && baseUrl.includes('.vercel.app')) {
       try {
         const urlObj = new URL(baseUrl);
