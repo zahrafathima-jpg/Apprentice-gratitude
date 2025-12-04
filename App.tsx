@@ -18,10 +18,7 @@ const App: React.FC = () => {
   const [name, setName] = useState('');
   const [currentQuote, setCurrentQuote] = useState('');
   const [qrImageUrl, setQrImageUrl] = useState('');
-  
-  // State for manual URL editing (fixes Vercel Preview auth issues)
   const [targetUrl, setTargetUrl] = useState('');
-  const [isEditingUrl, setIsEditingUrl] = useState(false);
 
   // --- Audio Logic ---
   const playAudio = (type: 'click' | 'success') => {
@@ -148,40 +145,6 @@ const App: React.FC = () => {
                 alt="QR Code to scan and open this app on mobile" 
                 className="w-64 h-64 sm:w-80 sm:h-80 object-contain mx-auto"
               />
-            </div>
-
-            {/* URL Editor for Vercel Preview Fix */}
-            <div className="no-print mb-8">
-              {isEditingUrl ? (
-                <div className="flex flex-col gap-2 animate-fadeIn">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Set Public URL (e.g., your-app.vercel.app)</label>
-                  <div className="flex gap-2 justify-center">
-                    <input 
-                      type="text" 
-                      value={targetUrl}
-                      onChange={(e) => setTargetUrl(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-1 text-sm w-full max-w-xs focus:ring-2 focus:ring-indigo-500 outline-none"
-                    />
-                    <button 
-                      onClick={() => setIsEditingUrl(false)}
-                      className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-indigo-700"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-1 group">
-                   <p className="text-xs text-gray-400">QR points to: <span className="font-mono">{targetUrl}</span></p>
-                   <button 
-                    onClick={() => setIsEditingUrl(true)}
-                    className="text-xs text-indigo-500 font-medium hover:underline hover:text-indigo-600 flex items-center gap-1"
-                   >
-                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                     Edit Link (Fix for Private Previews)
-                   </button>
-                </div>
-              )}
             </div>
 
             <div className="no-print space-y-4">
