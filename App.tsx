@@ -68,6 +68,7 @@ const App: React.FC = () => {
     setCurrentQuote(randomQuote);
 
     // 2. Initial URL detection with Smart Correction
+    // Uses current window location so it works on any domain (GitHub Pages, Vercel, localhost, etc.)
     let baseUrl = window.location.href.split('?')[0];
 
     // HEURISTIC: Fix Vercel Preview URLs to avoid "Login to Vercel" on scan

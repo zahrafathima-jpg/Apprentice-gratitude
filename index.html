@@ -162,7 +162,7 @@
         // Regenerate QR when targetUrl changes
         React.useEffect(() => {
           if (!targetUrl) return;
-          const cleanBase = targetUrl.split('?')[0];
+          const cleanBase = targetUrl.endsWith('/') ? targetUrl.slice(0, -1) : targetUrl;
           const studentUrl = `${cleanBase}?s=1`;
           const encodedUrl = encodeURIComponent(studentUrl);
           setQrImageUrl(`https://quickchart.io/qr?text=${encodedUrl}&size=500&ecLevel=L&dark=000000&light=ffffff&margin=4`);
