@@ -23,9 +23,6 @@ export const Header: React.FC = () => {
               Food for <span className="font-bold text-indigo-600">Thought</span>
             </h1>
           </div>
-          <div className="text-xs sm:text-sm text-gray-500">
-            2025 Edition
-          </div>
         </div>
       </div>
     </header>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { INSPIRATIONAL_QUOTES } from './constants';
@@ -249,7 +248,7 @@ const App: React.FC = () => {
 
               <div className="mt-8 pt-8 border-t border-gray-100">
                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
-                  Food for Thought 2025
+                  Food for Thought
                 </p>
               </div>
             </div>
@@ -257,11 +256,6 @@ const App: React.FC = () => {
         )}
 
       </main>
-      
-      {/* Footer / Copyright */}
-      <footer className="p-6 text-center text-gray-500 text-xs no-print">
-        <p>© 2025 Food for Thought Studio</p>
-      </footer>
     </div>
   );
 };
